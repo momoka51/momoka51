@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect,flash,jsonify
+from flask import Flask, render_template, request, url_for, redirect,flash,jsonify,
 import os
 from PIL import Image
 import io
@@ -10,7 +10,7 @@ from model import recognize_ingredients, suggest_recipes, parse_nutrition_data, 
 from flask import g 
 import psycopg2
 from dotenv import load_dotenv
-import os
+
 load_dotenv()
 
 app = Flask(__name__)

@@ -4,3 +4,13 @@ Flask-SQLAlchemy
 python-dotenv
 psycopg2-binary
 gunicorn
+os
+PIL
+io
+base64
+json
+datetime
+google.generativeai
+model
+psycopg2
+dotenv
