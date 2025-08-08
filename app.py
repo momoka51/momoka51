@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect,flash,jsonify,
+from flask import Flask, render_template, request, url_for, redirect,flash,jsonify
 import os
 from PIL import Image
 import io
