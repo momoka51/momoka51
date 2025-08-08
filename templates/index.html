@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+    <h1>AI料理研究家</h1>
+    <p>冷蔵庫の中身の写真をアップロードしてください！</p>
+    <form action="/" method="POST" enctype="multipart/form-data">
+        <input type="file" name="upload_file" accept="image/*" required>
+        <button type="submit">アップロード！</button>
+    </form>
+</div>
+{% endblock %}

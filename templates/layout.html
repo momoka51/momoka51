@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>AI料理研究家</title>
+    <style>
+    body {
+        background-color: #fff8f0;
+        color: #4e342e;
+        font-family: 'Kosugi Maru', 'Hiragino Kaku Gothic ProN', sans-serif;
+        background-image: url('https://cdn.pixabay.com/photo/2017/04/02/17/11/wood-2198801_1280.jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    .container {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 800px;
+        margin: 50px auto;
+        box-shadow: 0 0 30px rgba(0,0,0,0.2);
+    }
+    .uploaded-fridge-image {
+        border: 5px solid #ff7043;
+        border-radius: 20px;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+    }
+    .recipe-card {
+        background-color: #fffaf0;
+        border: 2px solid #e64a19;
+        border-radius: 20px;
+        padding: 25px;
+        margin-top: 20px;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+    }
+    .ingredients-card {
+    background-color: #fffef5;
+    border: 2px solid #ff7043;
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 15px;
+    box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+    }
+    .ingredients-card ul {
+        list-style-type: "🍅 ";
+        padding-left: 1.2em;
+        font-size: 18px;
+    }
+    .recipe-button {
+        width: 100%;
+        height: 60px;
+        font-size: 22px;
+        font-weight: bold;
+        color: white;
+        background-color: #e64a19;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .recipe-button:hover {
+        background-color: #ff5722;
+        transform: scale(1.03);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+    }
+
+    .recipe-button:active {
+        background-color: #bf360c;
+        transform: scale(0.98);
+    }
+    .loader-overlay {
+    display: none;
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(255, 255, 255, 0.8);
+    z-index:9999;
+    justify-content: center;
+    align-items: center;
+    font-size:30px;
+    color:#e64a19;
+    font-weight:bold;
+    }
+    .loader-overlay.active {
+        display: flex;
+    }
+        .wave {
+        display: inline-block;
+        animation: waveAnim 1.5s infinite;
+    }
+
+    .wave:nth-child(2) { animation-delay: 0s; }
+    .wave:nth-child(3) { animation-delay: 0.1s; }
+    .wave:nth-child(4) { animation-delay: 0.2s; }
+    .wave:nth-child(5) { animation-delay: 0.3s; }
+    .wave:nth-child(6) { animation-delay: 0.4s; }
+    .wave:nth-child(7) { animation-delay: 0.5s; }
+    .wave:nth-child(8) { animation-delay: 0.6s; }
+
+    @keyframes waveAnim {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+    }
+
+    </style>
+</head>
+<body>
+    <div class="loader-overlay" id="loader">
+    🍳 
+    <span class="wave">ロ</span>
+    <span class="wave">ー</span>
+    <span class="wave">ド</span>
+    <span class="wave">中</span>
+    <span class="wave">.</span>
+    <span class="wave">.</span>
+    <span class="wave">.</span>
+    </div>
+    
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul class="flashes">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</body>
+
+<style>
+  .flashes {
+    list-style: none;
+    padding: 10px;
+    margin: 20px auto;
+    max-width: 600px;
+    border: 2px solid #e64a19;
+    background-color: #ffe0b2;
+    color: #bf360c;
+    border-radius: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+</style>
+
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const forms = document.querySelectorAll("form");
+        forms.forEach(form => {
+            form.addEventListener("submit", function() {
+                document.getElementById("loader").classList.add("active");
+            });
+        });
+    });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>食材を編集</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        label { display: block; margin-top: 15px; }
+        input, select { padding: 8px; width: 300px; }
+        .button { margin-top: 20px; padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h2>食材を編集</h2>
+    <form method="POST">
+        <label>食材名：
+            <input type="text" name="name" value="{{ item.name }}" required>
+        </label>
+
+        <label>購入日：
+            <input type="date" name="purchase_date" value="{{ item.purchase_date }}" required>
+        </label>
+
+        <label>期限日：
+            <input type="date" name="expiration_date" value="{{ item.expiration_date }}" required>
+        </label>
+
+        <label>期限の種類：
+            <select name="expiration_type">
+                <option value="賞味期限" {% if item.expiration_type == "賞味期限" %}selected{% endif %}>賞味期限</option>
+                <option value="消費期限" {% if item.expiration_type == "消費期限" %}selected{% endif %}>消費期限</option>
+            </select>
+        </label>
+
+        <button type="submit" class="button">更新する</button>
+    </form>
+    <br>
+    <a href="{{ url_for('fridge') }}">← 戻る</a>
+</body>
+</html>

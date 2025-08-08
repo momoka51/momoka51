@@ -1,0 +1,172 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+    <h1 style="text-align:center; color:#4caf50;">🥬 冷蔵庫の賞味期限・消費期限一覧</h1>
+
+    {% if items %}
+        <table style="width:100%; margin-top:30px; border-collapse: collapse; font-size:18px;">
+            <thead>
+                <tr style="background-color:#a5d6a7;">
+                    <th style="padding:12px; border:1px solid #ccc;">食材名</th>
+                    <th style="padding:12px; border:1px solid #ccc;">期限の種類</th>
+                    <th style="padding:12px; border:1px solid #ccc;">期限日</th>
+                    <th style="padding:12px; border:1px solid #ccc;">残り日数</th>
+                    <th style="padding:12px; border:1px solid #ccc;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr style="background-color: {% if item.expiration_type == '消費期限' %}#ffccbc{% else %}#e8f5e9{% endif %};">
+                    <td style="padding:10px; border:1px solid #ccc;">{{ item.name }}</td>
+                    <td style="padding:10px; border:1px solid #ccc;">{{ item.expiration_type }}</td>
+                    <td style="padding:10px; border:1px solid #ccc;">{{ item.expiration_date }}</td>
+                    <td style="padding:10px; border:1px solid #ccc;">
+                        {% if item.days_left < 0 %}
+                            <span style="color:red;">期限切れ</span>
+                        {% else %}
+                            あと {{ item.days_left }} 日
+                        {% endif %}
+                    </td>
+               
+                <td style="padding:10px; border:1px solid #ccc;">
+                    {% if item.days_left < 0 %}
+                        <span style="color:red; font-weight:bold;">期限切れ</span>
+                    {% elif item.days_left <= 2 %}
+                        <span style="color:orange; font-weight:bold;">あと {{ item.days_left }} 日</span>
+                    {% else %}
+                        あと {{ item.days_left }} 日
+                    {% endif %}
+                </td>
+
+                </tr>
+                
+                {% endfor %}
+            </tbody>
+
+        </table>
+    {% else %}
+        <p>まだ保存されている食材はありません。</p>
+    {% endif %}
+
+    <div style="text-align:center; margin-top:30px;">
+        <a href="{{ url_for('index') }}" class="recipe-button">⬅ 戻る</a>
+    </div>
+</div>
+
+
+<h1>冷蔵庫の中身一覧</h1>
+
+<!-- 登録フォーム -->
+<form method="POST" action="{{ url_for('fridge') }}">
+  <label>食材名：</label>
+  <input type="text" name="name" required><br>
+
+  <label>期限の種類：</label>
+  <select name="expiration_type">
+    <option value="賞味期限">賞味期限</option>
+    <option value="消費期限">消費期限</option>
+  </select><br>
+
+  <label>期限日：</label>
+  <input type="date" name="expiration_date" required><br>
+
+  <button type="submit">追加する</button>
+</form>
+
+<h2>📝 食材ごとの保存日数を設定</h2>
+<form id="update-days-form">
+  <label>食材名：</label>
+  <input type="text" id="edit-name" required><br>
+
+  <label>保存日数：</label>
+  <input type="number" id="edit-days" required><br>
+
+  <button type="submit">保存日数を登録/更新</button>
+</form>
+
+<p id="update-result" style="color:green;"></p>
+
+<h3>現在登録されている保存日数一覧</h3>
+<div id="storage-days-list"></div>
+
+
+<script>
+  let storageDays = {};
+
+  // 保存日数を取得して storageDays に反映
+  async function loadStorageDays() {
+    const res = await fetch('/get_storage_days');
+    const data = await res.json();
+    storageDays = data;
+  }
+
+  async function renderStorageDaysList() {
+    const container = document.getElementById("storage-days-list");
+    if (!storageDays || Object.keys(storageDays).length === 0) {
+      container.innerHTML = "<p>登録されている保存日数はありません。</p>";
+      return;
+    }
+
+    let html = "<ul>";
+    for (const [name, days] of Object.entries(storageDays)) {
+      html += `<li><strong>${name}</strong>：${days}日</li>`;
+    }
+    html += "</ul>";
+    container.innerHTML = html;
+  }
+
+  // 保存日数を食材名入力時に使って日付自動入力
+  async function setupAutoFill() {
+    await loadStorageDays();
+    await renderStorageDaysList();
+
+    const nameInput = document.querySelector('input[name="name"]');
+    const expirationInput = document.querySelector('input[name="expiration_date"]');
+
+    nameInput.addEventListener("change", function() {
+      const name = this.value.trim();
+      const today = new Date();
+
+      if (storageDays[name]) {
+        const daysToAdd = storageDays[name];
+        const expirationDate = new Date(today);
+        expirationDate.setDate(today.getDate() + daysToAdd);
+
+        const yyyy = expirationDate.getFullYear();
+        const mm = String(expirationDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(expirationDate.getDate()).padStart(2, '0');
+        expirationInput.value = `${yyyy}-${mm}-${dd}`;
+      }
+    });
+  }
+
+  // 保存日数フォーム送信処理
+  document.getElementById("update-days-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const name = document.getElementById("edit-name").value.trim();
+    const days = parseInt(document.getElementById("edit-days").value);
+
+    if (!name || isNaN(days)) return;
+
+    const res = await fetch('/update_storage_day', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, days})
+    });
+
+    if (res.ok) {
+      document.getElementById("update-result").textContent = `✅ 「${name}」の保存日数を${days}日に設定しました。`;
+      await loadStorageDays();  // 反映
+      await renderStorageDaysList(); 
+    } else {
+      document.getElementById("update-result").textContent = `⚠ エラーが発生しました。`;
+    }
+  });
+
+  window.onload = setupAutoFill;
+</script>
+
+
+
+
+{% endblock %}

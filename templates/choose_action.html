@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+    <h1 style="text-align:center; color:#e64a19;">📸 画像アップロード完了！</h1>
+    <p style="text-align:center;">以下の画像から何をしたいですか？</p>
+    <div style="text-align:center;">
+        <img src="{{ image_path }}" alt="アップロード画像" style="max-width: 400px; border: 3px solid #ff7043; border-radius: 10px;">
+    </div>
+
+    <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
+        <form action="{{ url_for('check_expiration') }}" method="POST">
+            <input type="hidden" name="filename" value="{{ filename }}">
+            <button type="submit" class="recipe-button">🥕 賞味期限・消費期限を見る</button>
+        </form>
+
+        <form action="{{ url_for('generate_recipes_from_image') }}" method="POST">
+            <input type="hidden" name="filename" value="{{ filename }}">
+            <button type="submit" class="recipe-button">🍳 レシピを提案する</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% for recipe in recipes %}
+  <div class="recipe-box">
+    <h2>{{ recipe.title }}</h2>
+    <p><strong>材料：</strong><br>{{ recipe.ingredients|safe }}</p>
+    <p><strong>作り方：</strong><br>{{ recipe.method|safe }}</p>
+
+    <form action="{{ url_for('save_recipe') }}" method="POST">
+      <input type="hidden" name="title" value="{{ recipe.title }}">
+      <input type="hidden" name="ingredients" value="{{ recipe.ingredients }}">
+      <input type="hidden" name="method" value="{{ recipe.method }}">
+      <input type="hidden" name="ingredients_part" value="{{ recipe.ingredients_part }}">
+      <input type="hidden" name="method_part" value="{{ recipe.method_part }}">
+      <button type="submit">このレシピを保存する</button>
+    </form>
+  </div>
+{% endfor %}
