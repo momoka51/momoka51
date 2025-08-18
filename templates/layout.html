@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}AI料理研究家{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- テーマCSS（ここは前回お渡しした内容＋ローダーの最小スタイルのみ） -->
+  <style>
+  :root{
+    --bg:#fff8f0;
+    --fg:#4a342c;
+    --brand:#ff7a3a;
+    --brand-600:#ff6a20;
+    --brand-700:#e15712;
+    --brand-100:#fff1e7;
+    --accent:#ffb26b;
+    --danger:#b71c1c;
+    --border:#ead7c6;
+    --shadow:0 8px 24px rgba(0,0,0,.12);
+  }
+  @font-face{ font-family:"InterVar"; src: local("Inter"); font-display: swap; }
+  html,body{
+    background: radial-gradient(1200px 600px at 10% -10%, #fff2e6 0%, transparent 60%),
+                radial-gradient(1000px 500px at 100% 0%, #ffe9d8 0%, transparent 50%),
+                var(--bg);
+    color: var(--fg);
+    font-family: "InterVar","Hiragino Kaku Gothic ProN","Yu Gothic UI",system-ui,sans-serif;
+    line-height: 1.6;
+    min-height: 100%;
+    margin: 0;
+  }
+  .container{
+    background:#fff; border:1px solid var(--border); border-radius:20px;
+    padding:28px; max-width:920px; margin:48px auto; box-shadow:var(--shadow);
+  }
+  h1,h2,h3{ letter-spacing:.02em; margin:0 0 .6em; }
+  h1{ font-size:clamp(24px,3.2vw,32px); font-weight:800; color:var(--brand-700); }
+  h2{ font-size:clamp(20px,2.4vw,26px); color:var(--brand-600); font-weight:700; }
+  h3{ font-size:clamp(18px,2vw,22px); color:var(--fg); font-weight:700; }
+  .card,.recipe-card,.ingredients-card{
+    background:linear-gradient(180deg,#fff 0%,var(--brand-100) 100%);
+    border:1px solid var(--border); border-radius:16px; padding:20px; box-shadow:var(--shadow);
+  }
+  .uploaded-fridge-image, img.uploaded{
+    border:4px solid var(--brand); border-radius:16px; box-shadow:var(--shadow);
+  }
+  button,.recipe-button,.btn{
+    appearance:none; border:none; border-radius:12px; padding:14px 18px;
+    font-size:16px; font-weight:700; letter-spacing:.02em; cursor:pointer;
+    transition:transform .06s ease, box-shadow .2s ease, background-color .2s ease;
+    background:var(--brand); color:#fff; box-shadow:0 6px 16px rgba(255,122,58,.35);
+  }
+  button:hover,.recipe-button:hover,.btn:hover{ background:var(--brand-600); transform:translateY(-1px); }
+  button:active,.recipe-button:active,.btn:active{ background:var(--brand-700); transform:translateY(0); }
+  .btn--outline{ background:#fff; color:var(--brand-700); border:2px solid var(--brand); box-shadow:none; }
+  .btn--danger{ background:var(--danger); box-shadow:0 6px 16px rgba(183,28,28,.25); }
+  .tab-buttons{ display:flex; gap:10px; margin:12px 0 8px; }
+  .tab-btn{ flex:1; background:#fff; color:var(--brand-700); border:1px solid var(--border); box-shadow:var(--shadow); }
+  .tab-btn.active{ background:var(--brand); color:#fff; border-color:transparent; }
+  textarea,input[type="text"],input[type="date"],select{
+    width:100%; font-size:16px; border:1.5px solid var(--border); border-radius:12px;
+    padding:12px 14px; outline:none; background:#fff;
+  }
+  textarea:focus,input:focus,select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px rgba(255,178,107,.2); }
+  .table{ width:100%; border-collapse:collapse; font-size:16px; overflow:hidden; border-radius:14px; box-shadow:var(--shadow); }
+  .table thead th{
+    background:linear-gradient(180deg,#ffe1c8 0%,#ffd3ad 100%); color:#5b2c16;
+    padding:14px; text-align:left;
+  }
+  .table td{ background:#fff; border-top:1px solid var(--border); padding:12px 14px; }
+  .table tr:nth-child(even) td{ background:#fff9f3; }
+  .flashes{
+    list-style:none; padding:12px 16px; margin:20px auto; max-width:600px;
+    border:2px solid var(--accent); background-color:#fff3e6; color:var(--brand-700);
+    border-radius:12px; font-weight:700; text-align:center;
+  }
+  /* ローダー（既存JSが #loader を参照しているため表示器だけ用意） */
+  #loader{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(255,250,245,.7); z-index:9999; backdrop-filter: blur(2px);
+  }
+  #loader.active{ display:flex; }
+ 
+  /* ===== かわいい鍋ローダー ===== */
+#loader{
+  position:fixed; inset:0;
+  display:none; align-items:center; justify-content:center;
+  background: radial-gradient(800px 400px at 20% 0%, rgba(255,241,231,.8), rgba(255,248,240,.7)) , rgba(255,250,245,.65);
+  z-index:9999; backdrop-filter: blur(2px);
+}
+#loader.active{ display:flex; }
+
+.loader-card{
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+  padding:22px 26px; border-radius:18px;
+  background:#fff; border:1px solid var(--border); box-shadow: var(--shadow);
+}
+
+/* 鍋本体 */
+.pot{
+  position:relative; width:84px; height:52px; border-radius:12px;
+  background: linear-gradient(180deg, #fff1e7 0%, #ffd6b8 100%);
+  border:2px solid var(--brand-600);
+  box-shadow: inset 0 -6px 0 rgba(225,87,18,.12);
+}
+.pot::after{ /* 取っ手 */
+  content:""; position:absolute; left:-14px; top:16px; width:12px; height:18px;
+  border:2px solid var(--brand-600); border-right:none; border-radius:10px 0 0 10px; background:#fffaf5;
+}
+.pot::before{ /* 取っ手右 */
+  content:""; position:absolute; right:-14px; top:16px; width:12px; height:18px;
+  border:2px solid var(--brand-600); border-left:none; border-radius:0 10px 10px 0; background:#fffaf5;
+}
+
+.lid{ /* フタ */
+  position:absolute; left:50%; transform:translateX(-50%);
+  top:-12px; width:76px; height:16px; border-radius:12px 12px 6px 6px;
+  background: linear-gradient(180deg,#ffe9d8,#ffcfaa);
+  border:2px solid var(--brand-600);
+  animation: lid-wiggle 1.6s ease-in-out infinite;
+}
+.lid::after{ /* つまみ */
+  content:""; position:absolute; left:50%; top:-6px; transform:translateX(-50%);
+  width:14px; height:8px; border-radius:8px;
+  background:#e15712;
+}
+
+/* ふわふわ湯気 */
+.steam{
+  position:absolute; bottom:46px; left:50%;
+  width:10px; height:10px; border-radius:50%;
+  background: rgba(255,166,112,.75);
+  filter: blur(1px);
+  animation: steam 1.8s ease-in-out infinite;
+}
+.steam.s1{ margin-left:-18px; animation-delay:0s; }
+.steam.s2{ margin-left:-2px;  animation-delay:.35s; }
+.steam.s3{ margin-left:14px;  animation-delay:.7s; }
+
+/* ぷくぷく泡 */
+.bubble{
+  position:absolute; bottom:6px; left:50%;
+  width:8px; height:8px; border-radius:50%;
+  background:#ff7a3a;
+  animation: bubble 1.6s ease-in-out infinite;
+}
+.b1{ margin-left:-16px; animation-delay:0s; }
+.b2{ margin-left:0;    animation-delay:.3s; }
+.b3{ margin-left:16px; animation-delay:.6s; }
+
+.loader-text{
+  font-weight:800; color:var(--brand-700);
+  letter-spacing:.04em;
+}
+
+/* アニメーション定義 */
+@keyframes lid-wiggle{
+  0%,100%{ transform:translateX(-50%) rotate(0deg); }
+  50%    { transform:translateX(-50%) rotate(-4deg); }
+}
+@keyframes steam{
+  0%  { transform: translateY(0) scale(.8); opacity:.0; }
+  10% { opacity:.8; }
+  60% { transform: translateY(-28px) scale(1.1); opacity:.7; }
+  100%{ transform: translateY(-40px) scale(1.2); opacity:0; }
+}
+@keyframes bubble{
+  0%  { transform: translateY(0) scale(.8); opacity:.0; }
+  20% { opacity:1; }
+  60% { transform: translateY(-14px) scale(1.1); opacity:.9; }
+  100%{ transform: translateY(-20px) scale(1.2); opacity:0; }
+}
+
+/* モバイルで少し小さく */
+@media (max-width: 520px){
+  .pot{ transform: scale(.9); }
+}
+
+/* ページ中央寄せ（横幅と中央揃え） */
+.center-page{
+  max-width: 760px;      /* 好みで 640〜820px */
+  margin: 48px auto;
+  text-align: center;
+}
+
+/* たて並びの間隔をまとめて管理 */
+.stack{ display:flex; flex-direction:column; gap:16px; align-items:center; }
+
+/* ===== app header / chips / cards / badges ===== */
+.app-header{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; gap:12px;
+  padding:14px 18px;
+  background: linear-gradient(180deg,#fffaf4 0%, #ffe9d8 90%);
+  border-bottom:1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(225,87,18,.08);
+}
+.app-logo{
+  width:36px; height:36px; border-radius:10px;
+  background: radial-gradient(80% 80% at 50% 0%, #ffb26b, #ff7a3a);
+  display:grid; place-items:center; color:#fff; font-weight:900;
+  box-shadow: 0 6px 16px rgba(255,122,58,.35);
+}
+.app-title{ font-weight:800; color:var(--brand-700); letter-spacing:.02em; }
+
+.center-page{ max-width: 760px; margin: 24px auto; }
+
+.chips{ display:flex; flex-wrap:wrap; gap:10px; }
+.chip{
+  padding:10px 14px; border-radius:999px; font-weight:700;
+  background:#fff; border:1px solid var(--border); color:var(--brand-700);
+  box-shadow: var(--shadow);
+}
+.chip--active{ background: var(--brand); color:#fff; border-color:transparent; }
+
+.list{ display:flex; flex-direction:column; gap:14px; }
+.list-card{
+  display:flex; gap:14px; padding:14px; border-radius:18px;
+  background:#fff; border:1px solid var(--border); box-shadow: var(--shadow);
+}
+.list-card .thumb{
+  width:84px; height:84px; border-radius:14px; overflow:hidden; flex:0 0 84px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+.list-card .info{ flex:1; display:flex; flex-direction:column; gap:6px; }
+.price{ font-weight:800; color:var(--brand-700); }
+
+.badge{
+  display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:800;
+  border:1px solid var(--border); background:#fff9f3; color:var(--brand-700);
+}
+.badge--danger{ background:#ffe4e4; color:#b71c1c; border-color:#f5c0c0; }
+.badge--warn{ background:#fff0e3; color:#e15712; border-color:#ffd2b3; }
+
+.btn{ border-radius:16px; padding:14px 18px; }
+.btn--lg{ padding:16px 22px; font-size:18px; border-radius:18px; }
+.btn-gradient{
+  background: linear-gradient(180deg,#ff9257 0%, #ff7a3a 100%);
+  box-shadow: 0 10px 24px rgba(255,122,58,.35);
+}
+
+  </style>
+</head>
+<body>
+
+  <!-- 送信時のフェードを出すためのローダー。JSが class 'active' を付け外しします -->
+    <!-- layout.html の <body> 内、既存の #loader をこれに置換 -->
+    <div id="loader" role="status" aria-live="polite">
+    <div class="loader-card" aria-label="読み込み中">
+        <div class="pot">
+        <div class="lid"></div>
+        <div class="steam s1"></div>
+        <div class="steam s2"></div>
+        <div class="steam s3"></div>
+        <div class="bubble b1"></div>
+        <div class="bubble b2"></div>
+        <div class="bubble b3"></div>
+        </div>
+        <p class="loader-text">準備中…</p>
+    </div>
+    </div>
+
+    <div class="app-header">
+        <div class="app-logo">🍳</div>
+        <div class="app-title">COOKING DAILY</div>
+    </div>
+
+
+  <!-- 子テンプレートがここに入ります -->
+  {% block content %}{% endblock %}
+
+  <!-- 送信時にローダーON（共通JS） -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const loader = document.getElementById("loader");
+      document.querySelectorAll("form").forEach(form => {
+        form.addEventListener("submit", () => {
+          if (loader) loader.classList.add("active");
+        });
+      });
+    });
+  </script>
+
+  <!-- ページ固有のスクリプト差し込み用（必要なページだけ上書き） -->
+  {% block scripts %}{% endblock %}
+</body>
+</html>

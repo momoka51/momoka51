@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="center-page container">
+  <h1>次にやることを選んでください</h1>
+
+  {% if filename %}
+    <div class="chips" style="margin:10px 0 14px;">
+      <span class="chip chip--active">画像</span>
+      <span class="chip">レシピ</span>
+      <span class="chip">期限</span>
+    </div>
+
+    {% if image_path %}
+      <div class="card" style="padding:12px; margin-bottom:16px;">
+        <img src="{{ image_path }}" alt="uploaded" class="uploaded" style="width:100%; height:auto; max-height:520px; object-fit:cover;">
+      </div>
+    {% endif %}
+    <p style="margin:-4px 0 0; opacity:.8;">アップロード済み画像: <strong>{{ filename }}</strong></p>
+  {% endif %}
+
+  <div style="display:flex; flex-direction:column; gap:12px; align-items:center; margin-top:18px;">
+    <form action="{{ url_for('generate_recipes_from_image') }}" method="POST">
+      <input type="hidden" name="filename" value="{{ filename }}">
+      <button type="submit" class="btn btn--lg btn-gradient" style="min-width:280px;">レシピを生成する</button>
+    </form>
+
+    <form action="{{ url_for('fridge') }}" method="GET">
+      <button type="submit" class="btn btn--lg btn--outline" style="min-width:280px;">賞味/消費期限を見る</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

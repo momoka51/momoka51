@@ -1,0 +1,9 @@
+Flask
+Flask-Migrate
+Flask-SQLAlchemy
+python-dotenv
+psycopg2-binary
+gunicorn 
+pillow
+google.generativeai
+matplotlib

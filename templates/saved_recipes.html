@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 15px;
+  background: #fffaf0;
+  border: 2px solid #ff7043;
+  border-radius: 15px;
+  color: #e64a19;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+  transition: all 0.3s;
+}
+.tab-btn.active {
+  background-color: #ff7043;
+  color: white;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+</style>
+
+<div class="container">
+  <h1 style="text-align:center; color:#e64a19;">🍳 保存したレシピ一覧</h1>
+  {% if recipes %}
+    {% for r in recipes %}
+    <div class="recipe-card">
+      <h2>{{ r.title }}</h2>
+
+      <!-- タブボタン -->
+      <div class="tab-buttons">
+          <button class="tab-btn active" onclick="showTab(this, 'ingredients-{{ loop.index }}')">🍽 材料</button>
+          <button class="tab-btn" onclick="showTab(this, 'method-{{ loop.index }}')">👨‍🍳 作り方</button>
+      </div>
+
+      <!-- 材料 -->
+      <div id="ingredients-{{ loop.index }}" class="tab-content active">
+          <p style="font-size:18px; white-space: pre-wrap;">{{ r.ingredients_part|safe }}</p>
+      </div>
+
+      <!-- 作り方 -->
+      <div id="method-{{ loop.index }}" class="tab-content">
+          <p style="font-size:18px; white-space: pre-wrap;">{{ r.method_part|safe }}</p>
+      </div>
+
+       <form action="{{ url_for('delete_recipe', id=r.id) }}" method="POST" style="margin-top: 10px;">
+            <button type="submit" class="recipe-button" style="background-color:#b71c1c;">🗑 このレシピを削除する</button>
+        </form>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p>まだ保存されたレシピはありません。</p>
+  {% endif %}
+
+  <div style="text-align:center; margin-top:30px;">
+    <a href="javascript:history.go(-2)" class="button">← 戻る</a>
+
+  </div>
+</div>
+
+<script>
+function showTab(btn, tabId) {
+  const container = btn.closest(".recipe-card");
+  const tabs = container.querySelectorAll(".tab-content");
+  const buttons = container.querySelectorAll(".tab-btn");
+
+  tabs.forEach(tab => tab.classList.remove("active"));
+  buttons.forEach(button => button.classList.remove("active"));
+
+  container.querySelector("#" + tabId).classList.add("active");
+  btn.classList.add("active");
+}
+</script>
+<script>
+function showTab(button, tabId) {
+    // 同じレシピカード内のすべてのタブコンテンツを非表示にする
+    const parentCard = button.closest('.recipe-card');
+    const tabs = parentCard.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    // 同じカード内のすべてのボタンからactiveを外す
+    const buttons = parentCard.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    // 押されたボタンと対応するタブをactiveに
+    button.classList.add('active');
+    parentCard.querySelector(`#${tabId}`).classList.add('active');
+}
+</script>
+
+{% endblock %}

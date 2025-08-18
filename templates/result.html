@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+    <h1>AI料理研究家</h1>
+    {% if image_path %}
+        <img src="{{ image_path }}" alt="Uploaded Image" width="400" class="uploaded-fridge-image"><br>
+    {% endif %}
+
+    <h2>🥕 認識された食材 (必要なら修正してください)</h2>
+    <form action="{{ url_for('generate_recipes') }}" method="POST">
+        <textarea name="edited_ingredients" rows="10" style="width:100%; font-size:18px; border-radius:10px; border:2px solid #e64a19; padding:10px;">{{ ingredients }}</textarea>
+        <button type="submit" class="recipe-button" style="margin-top:15px; width:100%; height:60px; font-size:22px;">この内容でレシピを作成する！</button>
+    </form>
+    
+    <form action="{{ url_for('saved_recipes') }}" method="POST">
+        <label for="title">レシピのタイトル:</label><br>
+        <input type="text" id="title" name="title" value="新しいレシピ" style="width:100%; font-size:18px; border-radius:10px; border:2px solid #e64a19; padding:10px;"><br><br>
+
+        <input type="hidden" name="ingredients" value="{{ ingredients }}">
+        <label for="method">作り方:</label><br>
+        <textarea id="method" name="method" rows="10" style="width:100%; font-size:18px; border-radius:10px; border:2px solid #e64a19; padding:10px;">{{ method_part }}</textarea><br>
+        
+        <input type="hidden" name="ingredients_part" value="{{ ingredients_part }}">
+        <input type="hidden" name="method_part" value="{{ method_part }}">
+        <button type="submit" class="recipe-button">このレシピを保存する！</button>
+    </form>
+
+
+    <div class="recipe-card">
+        <h2>🍳 提案されたレシピ</h2>
+
+        <div class="ingredients-card">
+            <h3 style="color:#ff7043;">🍽️ 材料</h3>
+            <p style="font-size:18px; white-space: pre-wrap;">{{ ingredients_part|safe }}</p>
+        </div>
+
+        <div class="ingredients-card" style="margin-top:20px;">
+            <h3 style="color:#ff7043;">👨‍🍳 作り方</h3>
+            <p style="font-size:18px; white-space: pre-wrap;">{{ method_part|safe }}</p>
+        </div>
+    </div>
+
+    {% for recipe, graph in graphs.items() %}
+        <h3>{{ recipe }}</h3>
+        <img src="data:image/png;base64,{{ graph }}"alt="栄養バランスグラフ" style="width:300px; border:2px solid #e64a19; border-radius:10px;">
+    {% endfor %}
+    <button onclick="history.back()" class="recipe-button">⬅ 戻る</button>
+
+</div>
+{% endblock %}

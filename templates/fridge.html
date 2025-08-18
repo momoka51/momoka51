@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container center-page">
+  <h1>🥬 冷蔵庫の賞味期限・消費期限一覧</h1>
+
+  {% if items %}
+  <table class="table" style="margin-top:12px;">
+    <thead>
+      <tr>
+        <th>食材名</th>
+        <th>期限の種類</th>
+        <th>期限日</th>
+        <th>残り日数</th>
+        <th>状態</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.expiration_type }}</td>
+        <td>{{ item.expiration_date }}</td>
+        <td>
+          {% if item.days_left < 0 %}
+            <span class="badge badge--danger">期限切れ</span>
+          {% elif item.days_left <= 2 %}
+            <span class="badge badge--warn">あと {{ item.days_left }} 日</span>
+          {% else %}
+            <span class="badge">あと {{ item.days_left }} 日</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if item.days_left < 0 %}
+            <span class="badge badge--danger">要対応</span>
+          {% elif item.days_left <= 2 %}
+            <span class="badge badge--warn">お早めに</span>
+          {% else %}
+            <span class="badge">OK</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p>まだ保存されている食材はありません。</p>
+  {% endif %}
+
+  <div style="display:flex; justify-content:center; margin-top:18px;">
+    <button class="btn btn--outline" type="button" onclick="history.back()">⬅ 戻る</button>
+  </div>
+</div>
+
+<!-- ここから下は “登録・保存日数設定” セクション。見た目だけカード化 -->
+<div class="container center-page">
+  <h1>冷蔵庫の中身一覧</h1>
+
+  <!-- 登録フォーム -->
+  <div class="card" style="margin-top:12px;">
+    <form method="POST" action="{{ url_for('fridge') }}">
+      <label>食材名：</label>
+      <input type="text" name="name" required>
+
+      <label style="margin-top:10px;">期限の種類：</label>
+      <select name="expiration_type">
+        <option value="賞味期限">賞味期限</option>
+        <option value="消費期限">消費期限</option>
+      </select>
+
+      <label style="margin-top:10px;">期限日：</label>
+      <input type="date" name="expiration_date" required>
+
+      <button type="submit" class="btn" style="margin-top:12px;">追加する</button>
+    </form>
+  </div>
+
+  <h2 style="margin-top:24px;">📝 食材ごとの保存日数を設定</h2>
+  <div class="card" style="margin-top:8px;">
+    <form id="update-days-form">
+      <label>食材名：</label>
+      <input type="text" id="edit-name" required>
+
+      <label style="margin-top:10px;">保存日数：</label>
+      <input type="number" id="edit-days" required>
+
+      <button type="submit" class="btn" style="margin-top:12px;">保存日数を登録/更新</button>
+    </form>
+    <p id="update-result" style="color:var(--brand-700); font-weight:700; margin-top:10px;"></p>
+
+    <h3 style="margin-top:10px;">現在登録されている保存日数一覧</h3>
+    <div id="storage-days-list"></div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+  let storageDays = {};
+
+  async function loadStorageDays() {
+    const res = await fetch('/get_storage_days');
+    const data = await res.json();
+    storageDays = data;
+  }
+
+  async function renderStorageDaysList() {
+    const container = document.getElementById("storage-days-list");
+    if (!storageDays || Object.keys(storageDays).length === 0) {
+      container.innerHTML = "<p>登録されている保存日数はありません。</p>";
+      return;
+    }
+    let html = "<ul>";
+    for (const [name, days] of Object.entries(storageDays)) {
+      html += `<li><strong>${name}</strong>：${days}日</li>`;
+    }
+    html += "</ul>";
+    container.innerHTML = html;
+  }
+
+  async function setupAutoFill() {
+    await loadStorageDays();
+    await renderStorageDaysList();
+
+    const nameInput = document.querySelector('input[name="name"]');
+    const expirationInput = document.querySelector('input[name="expiration_date"]');
+
+    if (nameInput && expirationInput) {
+      nameInput.addEventListener("change", function() {
+        const name = this.value.trim();
+        const today = new Date();
+        if (storageDays[name]) {
+          const daysToAdd = storageDays[name];
+          const expirationDate = new Date(today);
+          expirationDate.setDate(today.getDate() + daysToAdd);
+          const yyyy = expirationDate.getFullYear();
+          const mm = String(expirationDate.getMonth() + 1).padStart(2, '0');
+          const dd = String(expirationDate.getDate()).padStart(2, '0');
+          expirationInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+      });
+    }
+  }
+
+  document.getElementById("update-days-form")?.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const name = document.getElementById("edit-name").value.trim();
+    const days = parseInt(document.getElementById("edit-days").value);
+    if (!name || isNaN(days)) return;
+
+    const res = await fetch('/update_storage_day', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, days})
+    });
+
+    if (res.ok) {
+      document.getElementById("update-result").textContent =
+        `✅ 「${name}」の保存日数を${days}日に設定しました。`;
+      await loadStorageDays();
+      await renderStorageDaysList();
+    } else {
+      document.getElementById("update-result").textContent = `⚠ エラーが発生しました。`;
+    }
+  });
+
+  window.onload = setupAutoFill;
+</script>
+{% endblock %}
+
+{% endblock %}
